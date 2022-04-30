@@ -255,6 +255,18 @@ export class DraggableDirective implements OnInit, OnChanges, OnDestroy {
           pointerDownEvent.event.stopPropagation();
         }
 
+        // pageX/Y offset added if detected that we are in a shadow dom
+        // this offset is needed for correct element x/y pos.
+        const crect = this.element.nativeElement.getBoundingClientRect();
+        let pageX = (pointerDownEvent.event as any).pageX || 0;
+        pageX -= (pageX - crect.left);
+        let pageY = (pointerDownEvent.event as any).pageY || 0;
+        if (pageY > crect.bottom) {
+            pageY = (pageY - crect.top);
+        } else {
+            pageY = 0;
+        }
+
         // hack to prevent text getting selected in safari while dragging
         const globalDragStyle: HTMLStyleElement =
           this.renderer.createElement('style');
@@ -421,8 +433,8 @@ export class DraggableDirective implements OnInit, OnChanges, OnDestroy {
 
             this.setElementStyles(clone, {
               position: 'fixed',
-              top: `${rect.top}px`,
-              left: `${rect.left}px`,
+              top: `${rect.top - pageY}px`,
+              left: `${rect.left - pageX}px`,
               width: `${rect.width}px`,
               height: `${rect.height}px`,
               cursor: this.dragCursor,
